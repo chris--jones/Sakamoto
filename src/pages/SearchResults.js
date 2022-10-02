@@ -25,7 +25,15 @@ function SearchResults() {
         `${process.env.REACT_APP_BACKEND_URL}api/search?name=${urlParams}`
       );
       setLoading(false);
-      setResults(res.data);
+      setResults(res.data.map(item => {
+        const type = item.title.toLowerCase().endsWith('(dub)') ? 'dub' : 'sub';
+        return {
+          ...item,
+          title: type === 'dub' ? item.title.substring(0, item.title.length-5) : item.title,
+          type,
+        }
+      }
+      ));
     }
     getResults();
   }, [urlParams]);
@@ -42,12 +50,6 @@ function SearchResults() {
       [otherKey]:otherChecked
     });
   };
-  
-  const filterResults = (item) => {
-    if (filter.dubs && filter.subs) return true;
-    let match = item.title.toLowerCase().endsWith('(dub)');
-    return filter.dubs ? match : !match;
-  }
 
   return (
     <div>
@@ -64,10 +66,10 @@ function SearchResults() {
             <input id="subs" checked={filter.subs} onChange={updateSearchFilter} type="checkbox" value="subs" />
           </CheckboxWrapper>
           <CardWrapper>
-            {results.filter(filterResults).map((item, i) => (
+            {results.filter(item => filter[`${item.type}s`]).map((item, i) => (
               <Wrapper to={item.link}>
                 <img src={item.image} alt="" />
-                <p>{item.title}</p>
+                <CardTitle><span>{item.title}</span><span className={"type "+item.type}>{item.type}</span></CardTitle>
               </Wrapper>
             ))}
           </CardWrapper>
@@ -99,19 +101,24 @@ const CheckboxWrapper = styled.div`
     margin-left: 2rem;
   }
 `
+const CardTitle = styled.p`
+  display:flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  span {
+    padding: 0.05rem 0.15rem;
+  }
+  .type {
+    border-radius: 2px;
+    background: #0062ca;
+    text-transform:uppercase;
+    &.dub {
+      background:#007a3b;
+    }
+  }
+`
 
 const CardWrapper = styled.div`
-  /* display: flex;
-  justify-content: space-between;
-  flex-flow: row wrap;
-  row-gap: 2rem;
-  column-gap: 2rem;
-
-  ::after {
-    content: "";
-    flex: auto;
-  } */
-
   display: grid;
   grid-template-columns: repeat(auto-fill, 160px);
   grid-gap: 1rem;
